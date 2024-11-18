@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据管理 - 结直肠癌患者术后随访系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-button {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .data-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .data-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .action-button.primary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .action-button.danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .data-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .data-tab {
+            padding: 10px 20px;
+            background: #e3f2fd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .data-tab.active {
+            background: #2196F3;
+            color: white;
+        }
+
+        .detail-view {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .filter-group {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            white-space: nowrap;
+            color: #666;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .patient-archive {
+            border-left: 4px solid #2196F3;
+            margin-bottom: 30px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .archive-header {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .archive-content {
+            padding: 15px;
+        }
+
+        .followup-list {
+            margin-top: 15px;
+        }
+
+        .followup-item {
+            padding: 10px;
+            border-left: 3px solid #2196F3;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+        }
+
+        .auth-button {
+            padding: 8px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .auth-button:hover {
+            background: #1976D2;
+        }
+
+        #searchFilters {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group input[type="text"],
+        .filter-group input[type="password"] {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .password-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .password-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .password-content h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .password-content input {
+            width: 100%;
+            padding: 8px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .dialog-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .dialog-buttons button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dialog-buttons button:first-child {
+            background: #2196F3;
+            color: white;
+        }
+
+        .dialog-buttons button:last-child {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-buttons {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .data-tab {
+            padding: 8px 16px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .data-tab.active {
+            background: #2196F3;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="back-button">
+            <svg class="back-icon" viewBox="0 0 24 24">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            返回首页
+        </a>
+        <h1>数据管理</h1>
+        <div style="width: 80px;"></div>
+    </div>
+
+    <div class="container">
+        <div class="data-section">
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>身份验证：</label>
+                        <select id="userType" onchange="toggleAuthInput()">
+                            <option value="doctor">主管医生</option>
+                            <option value="patient">患者</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" id="doctorAuthGroup">
+                        <label>医生工号：</label>
+                        <input type="password" id="doctorId" placeholder="请输入医生工号">
+                        <button onclick="verifyDoctor()" class="auth-button">验证</button>
+                    </div>
+                    <div class="filter-group" id="patientAuthGroup" style="display: none;">
+                        <label>身份证号：</label>
+                        <input type="text" id="patientIdCard" placeholder="请输入身份证号">
+                        <button onclick="verifyPatient()" class="auth-button">查询</button>
+                    </div>
+                </div>
+                <div class="filter-row" id="searchFilters" style="display: none;">
+                    <div class="filter-group">
+                        <label>年份筛选：</label>
+                        <select id="yearFilter" onchange="applyFilters()">
+                            <option value="">全部年份</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>姓名搜索：</label>
+                        <input type="text" id="nameFilter" oninput="applyFilters()" placeholder="输入患者姓名">
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <div class="tab-buttons">
+                    <div class="data-tab active" onclick="showDataType('patient')">患者档案</div>
+                    <span style="margin: 0 4ch;"></span>
+                    <div class="data-tab" onclick="exportData()">导出数据</div>
+                    <button id="clearDataButton" class="action-button danger" onclick="confirmClearData()" style="display: none; margin-left: auto;">清除所有数据</button>
+                </div>
+            </div>
+
+            <div id="dataDisplay"></div>
+            <div id="detailView" class="detail-view"></div>
+        </div>
+    </div>
+
+    <div id="passwordDialog" style="display: none;" class="password-dialog">
+        <div class="password-content">
+            <h3>请输入管理员密码</h3>
+            <input type="password" id="adminPassword" placeholder="请输入密码">
+            <div class="dialog-buttons">
+                <button onclick="verifyPasswordAndClear()">确认</button>
+                <button onclick="closePasswordDialog()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DOCTOR_ID = '8438'; // 更新为实际的医生工号
+        const ADMIN_PASSWORD = '123456';
+
+        // 切换身份验证输入框
+        function toggleAuthInput() {
+            const userType = document.getElementById('userType').value;
+            document.getElementById('doctorAuthGroup').style.display = 
+                userType === 'doctor' ? 'flex' : 'none';
+            document.getElementById('patientAuthGroup').style.display = 
+                userType === 'patient' ? 'flex' : 'none';
+            document.getElementById('searchFilters').style.display = 'none';
+            document.getElementById('clearDataButton').style.display = 'none'; // 默认隐藏清除数据按钮
+            clearDisplay();
+        }
+
+        // 验证医生身份
+        function verifyDoctor() {
+            const doctorId = document.getElementById('doctorId').value;
+            if (doctorId === DOCTOR_ID) {
+                document.getElementById('searchFilters').style.display = 'flex';
+                document.getElementById('clearDataButton').style.display = 'inline-block'; // 显示清除数据按钮
+                loadAllPatients();
+                initializeYearFilter();
+            } else {
+                alert('医生工号验证失败，请输入正确的工号');
+            }
+        }
+
+        // 验证患者身份
+        function verifyPatient() {
+            const idCard = document.getElementById('patientIdCard').value;
+            if (idCard) {
+                document.getElementById('clearDataButton').style.display = 'none'; // 隐藏清除数据按钮
+                loadPatientData(idCard);
+            } else {
+                alert('请输入身份证号');
+            }
+        }
+
+        // 加载所有患者数据
+        function loadAllPatients() {
+            let html = '<div class="patient-archives">';
+            const patients = new Map();
+
+            for(let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.includes('_')) {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    const patientKey = `${data.name}_${data.idCard}`;
+                    
+                    if(!patients.has(patientKey)) {
+                        patients.set(patientKey, {
+                            basicInfo: data,
+                            followups: [],
+                            healthRecords: []
+                        });
+                    }
+
+                    // 收集随访记录和健康监测数据
+                    collectPatientData(patientKey, patients.get(patientKey));
+                }
+            }
+
+            displayPatients(patients);
+        }
+
+        // 加载单个患者数据
+        function loadPatientData(idCard) {
+            const patients = new Map();
+            let found = false;
+            
+            // 遍历localStorage查找匹配的患者数据
+            for(let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.includes('_')) {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    // 检查身份证号是否匹配
+                    if(data.idCard && data.idCard === idCard) {
+                        found = true;
+                        const patientKey = `${data.name}_${data.idCard}`;
+                        
+                        // 收集患者基本信息
+                        if(!patients.has(patientKey)) {
+                            patients.set(patientKey, {
+                                basicInfo: data,
+                                followups: [],
+                                healthRecords: []
+                            });
+                        }
+
+                        // 收集随访记录
+                        const followupKey = `followup_${patientKey}`;
+                        const followups = JSON.parse(localStorage.getItem(followupKey) || '[]');
+                        patients.get(patientKey).followups = followups;
+
+                        // 收集健康监测记录
+                        const healthKey = `health_${patientKey}`;
+                        const healthRecords = JSON.parse(localStorage.getItem(healthKey) || '[]');
+                        patients.get(patientKey).healthRecords = healthRecords;
+                    }
+                }
+            }
+
+            if(!found) {
+                alert('未找到相关患者信息');
+                return;
+            }
+
+            // 显示患者数据
+            displayPatients(patients);
+        }
+
+        // 修改应用筛选条件函数
+        function applyFilters() {
+            const yearFilter = document.getElementById('yearFilter').value;
+            const nameFilter = document.getElementById('nameFilter').value.toLowerCase().trim();
+            
+            const patients = new Map();
+            for(let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.includes('_')) {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    const patientKey = `${data.name}_${data.idCard}`;
+                    
+                    // 修改筛选逻辑
+                    let matchesYear = true;
+                    let matchesName = true;
+
+                    // 年份筛选
+                    if(yearFilter && data.surgeryDate) {
+                        const surgeryYear = new Date(data.surgeryDate).getFullYear().toString();
+                        matchesYear = surgeryYear === yearFilter;
+                    }
+
+                    // 姓名筛选
+                    if(nameFilter && data.name) {
+                        matchesName = data.name.toLowerCase().includes(nameFilter);
+                    }
+
+                    // 只有同时满足年份和姓名筛选条件才添加到结果中
+                    if(matchesYear && matchesName && !patients.has(patientKey)) {
+                        patients.set(patientKey, {
+                            basicInfo: data,
+                            followups: [],
+                            healthRecords: []
+                        });
+                        collectPatientData(patientKey, patients.get(patientKey));
+                    }
+                }
+            }
+
+            displayPatients(patients);
+        }
+
+        // 添加输入事件监听
+        document.getElementById('nameFilter').addEventListener('input', function() {
+            applyFilters();
+        });
+
+        // 收集患者数据
+        function collectPatientData(patientKey, patientData) {
+            const followups = JSON.parse(localStorage.getItem(`followup_${patientKey}`) || '[]');
+            const healthRecords = JSON.parse(localStorage.getItem(`health_${patientKey}`) || '[]');
+            patientData.followups = followups;
+            patientData.healthRecords = healthRecords;
+        }
+
+        // 清除显示
+        function clearDisplay() {
+            document.getElementById('dataDisplay').innerHTML = '';
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', () => {
+            toggleAuthInput();
+        });
+
+        // 添加displayPatients函数
+        function displayPatients(patients) {
+            let html = '<div class="patient-archives">';
+            
+            patients.forEach((patientData, patientKey) => {
+                const { basicInfo, followups, healthRecords } = patientData;
+                
+                html += `
+                    <div class="patient-archive">
+                        <div class="archive-header">
+                            <h3>${basicInfo.name || '未知姓名'}</h3>
+                            <div>身份证号: ${basicInfo.idCard || '未记录'}</div>
+                            <div>手术日期: ${basicInfo.surgeryDate || '未记录'}</div>
+                        </div>
+                        <div class="archive-content">
+                            <div class="basic-info">
+                                <h4>基本信息</h4>
+                                <p>性别: ${basicInfo.gender || '未记录'}</p>
+                                <p>年龄: ${basicInfo.age || '未记录'}</p>
+                                <p>联系电话: ${basicInfo.phone || '未记录'}</p>
+                            </div>
+                            
+                            <div class="followup-list">
+                                <h4>随访记录 (${followups.length}条)</h4>
+                                ${followups.map(f => `
+                                    <div class="followup-item">
+                                        <div>随访日期: ${f.followUpDate || '未记录'}</div>
+                                        <div>CEA值: ${f.cea || '未记录'}</div>
+                                        <div>CT结果: ${f.ctResult || '未记录'}</div>
+                                        ${f.ctResult === 'abnormal' ? `<div>CT异常描述: ${f.ctAbnormalDetail || ''}</div>` : ''}
+                                        <div>肠镜结果: ${f.colonoscopyResult || '未记录'}</div>
+                                        ${f.colonoscopyResult === 'abnormal' ? `<div>肠镜异常描述: ${f.colonoscopyAbnormalDetail || ''}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <div class="health-records">
+                                <h4>健康监测记录 (${healthRecords.length}条)</h4>
+                                ${healthRecords.map(h => `
+                                    <div class="health-item">
+                                        <div>记录日期: ${h.recordDate || '未记录'}</div>
+                                        <div>体重: ${h.weight || '未记录'} kg</div>
+                                        <div>排便次数: ${h.stoolFrequency || '未记录'} 次/天</div>
+                                        <div>疼痛等级: ${h.painLevel || '0'}/10</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            document.getElementById('dataDisplay').innerHTML = html;
+        }
+
+        // 显示密码验证对话框
+        function confirmClearData() {
+            document.getElementById('passwordDialog').style.display = 'flex';
+        }
+
+        // 关闭密码验证对话框
+        function closePasswordDialog() {
+            document.getElementById('passwordDialog').style.display = 'none';
+            document.getElementById('adminPassword').value = ''; // 清空密码输入
+        }
+
+        // 验证密码并清除数据
+        function verifyPasswordAndClear() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                localStorage.clear();
+                alert('所有数据已清除！');
+                location.reload();
+            } else {
+                alert('密码错误！');
+            }
+            closePasswordDialog();
+        }
+
+        // 添加回车键确认功能
+        document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyPasswordAndClear();
+            }
+        });
+
+        // 修改showDataType函数，只保留patient类型
+        function showDataType(type) {
+            const dataDisplay = document.getElementById('dataDisplay');
+            let html = '<table class="data-table">';
+            
+            // 只处理患者档案类型
+            html += showPatientData();
+            
+            html += '</table>';
+            dataDisplay.innerHTML = html;
+
+            // 更新标签页状态
+            document.querySelectorAll('.data-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html> 

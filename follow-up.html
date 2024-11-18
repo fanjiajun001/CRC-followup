@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随访记录 - 结直肠癌患者术后随访系统</title>
+    <!-- 添加Chart.js库用于显示检查结果趋势图 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 复用patient-info.html的基础样式 */
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-button {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-2px);
+        }
+
+        .back-icon {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 添加新的样式 */
+        .patient-selector {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .history-list {
+            margin-top: 20px;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e3f2fd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: #2196F3;
+            color: white;
+        }
+
+        .next-button {
+            background: #2196F3;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .next-button:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .save-button {
+            background: #2196F3;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: auto;
+            min-width: 200px;
+        }
+
+        .save-button:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .image-upload {
+            margin-top: 10px;
+        }
+
+        .upload-label {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #e3f2fd;
+            color: #1976D2;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .upload-label:hover {
+            background: #bbdefb;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .preview-item {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .remove-image:hover {
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="back-button">
+            <svg class="back-icon" viewBox="0 0 24 24">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+            返回首页
+        </a>
+        <h1>随访记录</h1>
+        <div style="width: 80px;"></div>
+    </div>
+
+    <div class="container">
+        <form id="followUpForm">
+            <div class="section">
+                <h2 class="section-title">随访信息</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>随访日期</label>
+                        <input type="date" name="followUpDate" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">检查结果</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CEA值 (ng/mL)</label>
+                        <input type="number" name="cea" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>CT检查结果</label>
+                        <select name="ctResult" onchange="toggleAbnormalDetail('ct')">
+                            <option value="">请选择</option>
+                            <option value="normal">正常</option>
+                            <option value="abnormal">异常</option>
+                            <option value="notDone">未做</option>
+                        </select>
+                        <div id="ctAbnormalDetail" style="display: none; margin-top: 10px;">
+                            <textarea name="ctAbnormalDetail" rows="3" placeholder="请详细描述CT检查的异常发现..."></textarea>
+                            <div class="image-upload">
+                                <label for="ctImage" class="upload-label">上传CT图片</label>
+                                <input type="file" id="ctImage" name="ctImage" accept="image/*" onchange="previewImage(this, 'ctImagePreview')" multiple>
+                                <div id="ctImagePreview" class="image-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>肠镜检查结果</label>
+                        <select name="colonoscopyResult" onchange="toggleAbnormalDetail('colonoscopy')">
+                            <option value="">请选择</option>
+                            <option value="normal">正常</option>
+                            <option value="abnormal">异常</option>
+                            <option value="notDone">未做</option>
+                        </select>
+                        <div id="colonoscopyAbnormalDetail" style="display: none; margin-top: 10px;">
+                            <textarea name="colonoscopyAbnormalDetail" rows="3" placeholder="请详细描述肠镜检查的异常发现..."></textarea>
+                            <div class="image-upload">
+                                <label for="colonoscopyImage" class="upload-label">上传肠镜图片</label>
+                                <input type="file" id="colonoscopyImage" name="colonoscopyImage" accept="image/*" onchange="previewImage(this, 'colonoscopyImagePreview')" multiple>
+                                <div id="colonoscopyImagePreview" class="image-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">随访计划</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>随访阶段</label>
+                        <select name="followUpStage" onchange="updateFollowUpPlan()">
+                            <option value="">请选择</option>
+                            <option value="year1">术后1年内</option>
+                            <option value="year1-2">术后1-2年</option>
+                            <option value="year2-5">术后2-5年</option>
+                            <option value="year5+">术后5年以上</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>下次随访日期</label>
+                        <input type="date" name="nextFollowUpDate" readonly>
+                    </div>
+                </div>
+                <div id="followUpPlanDetails" class="plan-details" style="margin-top: 15px; color: #666;">
+                    <!-- 这里会显示随访计划详情 -->
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">CEA变化趋势</h2>
+                <div class="chart-container">
+                    <canvas id="ceaChart"></canvas>
+                </div>
+            </div>
+
+            <div class="section" style="text-align: center; margin-top: 30px;">
+                <button type="submit" class="save-button">保存信息</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // 新随访计划
+        function updateFollowUpPlan() {
+            const stage = document.querySelector('[name="followUpStage"]').value;
+            const today = new Date();
+            let nextDate = new Date(today);
+            let planDetails = '';
+
+            switch(stage) {
+                case 'year1':
+                    nextDate.setMonth(today.getMonth() + 3);
+                    planDetails = `
+                        <ul>
+                            <li>CEA、CA199检查：每3个月一次</li>
+                            <li>胸腹部CT：每6个月一次</li>
+                            <li>肠镜检查：术后1年</li>
+                        </ul>
+                        <p style="color: #666; margin-top: 10px;">
+                            提示：术后前2年内，需要每3个月进行一次CEA、CA199检查
+                        </p>`;
+                    break;
+                case 'year1-2':
+                    nextDate.setMonth(today.getMonth() + 3);
+                    planDetails = `
+                        <ul>
+                            <li>CEA、CA199检查：每3个月一次</li>
+                            <li>胸腹部CT：每6个月一次</li>
+                            <li>肠镜检查：如无异常，3年后复查</li>
+                        </ul>
+                        <p style="color: #666; margin-top: 10px;">
+                            提示：术后2年后至5年内，将改为每6个月进行一次CEA、CA199检查
+                        </p>`;
+                    break;
+                case 'year2-5':
+                    nextDate.setMonth(today.getMonth() + 6);
+                    planDetails = `
+                        <ul>
+                            <li>CEA、CA199检查：每6个月一次</li>
+                            <li>胸腹部CT：每年一次</li>
+                            <li>肠镜检查：如无异常，继续定期复查</li>
+                        </ul>
+                        <p style="color: #666; margin-top: 10px;">
+                            提示：术后5年后，将改为每年进行一次CEA、CA199检查
+                        </p>`;
+                    break;
+                case 'year5+':
+                    nextDate.setMonth(today.getMonth() + 12);
+                    planDetails = `
+                        <ul>
+                            <li>CEA、CA199检查：每年一次</li>
+                            <li>胸腹部CT：每年一次</li>
+                            <li>肠镜检查：每5年一次</li>
+                        </ul>
+                        <p style="color: #666; margin-top: 10px;">
+                            提示：继续保持每年一次的常规检查，保持良好的随访习惯
+                        </p>`;
+                    break;
+            }
+
+            document.querySelector('[name="nextFollowUpDate"]').value = 
+                nextDate.toISOString().split('T')[0];
+            document.getElementById('followUpPlanDetails').innerHTML = planDetails;
+        }
+
+        // 显示/隐藏异常详情输入框
+        function toggleAbnormalDetail(type) {
+            const select = document.querySelector(`[name="${type}Result"]`);
+            const detail = document.getElementById(`${type}AbnormalDetail`);
+            if (select.value === 'abnormal') {
+                detail.style.display = 'block';
+                detail.querySelector('textarea').required = true;
+            } else {
+                detail.style.display = 'none';
+                detail.querySelector('textarea').required = false;
+            }
+        }
+
+        // 初始化CEA趋势图
+        function initializeCEAChart() {
+            const ctx = document.getElementById('ceaChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], // 日期数组
+                    datasets: [{
+                        label: 'CEA值 (ng/mL)',
+                        data: [], // CEA值数组
+                        borderColor: '#2196F3',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'CEA值 (ng/mL)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '检查日期'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载时初始化图表
+        window.addEventListener('load', initializeCEAChart);
+
+        // 图片预览功能
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = ''; // 清空现有预览
+
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'preview-item';
+                        previewItem.innerHTML = `
+                            <img src="${e.target.result}" alt="预览图片">
+                            <button type="button" class="remove-image" onclick="removeImage('${previewId}', ${index})">×</button>
+                        `;
+                        preview.appendChild(previewItem);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        // 删除预览图片
+        function removeImage(previewId, index) {
+            const preview = document.getElementById(previewId);
+            const items = preview.getElementsByClassName('preview-item');
+            if (items[index]) {
+                items[index].remove();
+            }
+        }
+
+        // 修改表单提交处理，包含图片数据
+        document.getElementById('followUpForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // 转换FormData为对象，包含图片的base64数据
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                if (key === 'ctImage' || key === 'colonoscopyImage') {
+                    // 处理图片文件
+                    const files = document.getElementById(key).files;
+                    if (files.length > 0) {
+                        data[key] = Array.from(files).map(file => URL.createObjectURL(file));
+                    }
+                } else {
+                    data[key] = value;
+                }
+            }
+            
+            data.timestamp = new Date().toISOString();
+            
+            // 暂存随访记录
+            let followups = JSON.parse(localStorage.getItem('temp_followup_records') || '[]');
+            followups.push(data);
+            localStorage.setItem('temp_followup_records', JSON.stringify(followups));
+            
+            alert('随访记录已保存！');
+            window.location.href = 'health-monitor.html';
+        });
+    </script>
+</body>
+</html> 
